@@ -1,7 +1,6 @@
 # DarwinEye
 
-DarwinEye is a tool for offline visual inspection of evolutionary and swarm optimization algorithms
-Wanna know why this name? Read my [article about it](https://www.linkedin.com/pulse/conspiracy-darwin-sci-poetry-adailson-filho?published=u)
+DarwinEye is a tool for offline visual inspection of evolutionary and swarm optimization algorithms. Wanna know why this name? Read my [article about it](https://www.linkedin.com/pulse/conspiracy-darwin-sci-poetry-adailson-filho?published=u)
 
 # In the basics
 
