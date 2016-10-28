@@ -6,4 +6,11 @@ DarwinEye is a tool for offline visual inspection of evolutionary and swarm opti
 
 A JSON with the algoritm log must be provided (in a specif format [SOON]), with it DarwinEye will produce a set of graphs for inspecting important aspects of the process of high dimensional problems, like: Paralel Coordinate, Fitness evolution, Scatter Plot with a special dimension reduction with an variation of sammon's mapping (and it's errors in each epoch).
 
-[Soon a better description and details]
+Dependencies:
+- Matplotlib: =< 1.5.3
+- Numpy: =< 1.11
+- [Swarma](https://github.com/adailsonfilho/swarma)
+
+Soon
+- Enhanced Architecture
+- Submodules import [Swarma](https://github.com/adailsonfilho/swarma)
