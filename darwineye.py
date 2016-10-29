@@ -1,5 +1,5 @@
 from plots import PlotBase, SammonErrorPlot, BestFitnessPlot, Sammon2DPlot, ParalelCoordPlot
-import setup
+import config
 
 import time
 
@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import matplotlib.cm as cmx
 from matplotlib import style
+
 style.use("ggplot")
 
 import numpy as np
@@ -59,6 +60,7 @@ def load_data():
 
 	return data, fitness
 
+
 def sammon(data):
 	#fakesammon
 	return np.random.random((data.shape[0],data.shape[1],2)), np.random.random(data.shape[0])
@@ -79,13 +81,13 @@ if __name__ == '__main__':
 	data2D, sammon_error = sammon(dataND)
 
 	#normilize data
-	norm_data,norm_fitness =  normalizeEvolutiveData(dataND, fitness,verbose=True)
+	norm_data, norm_fitness =  normalizeEvolutiveData(dataND, fitness,verbose=True)
 
 
-	#SORTING
-
+	#SORTING indexes
 	foi = fitness.argsort()
 
+	#SORTING IN_PRACTICE
 	s_dataND = dataND.copy()
 	s_data2D = data2D.copy()
 	s_norm_data = norm_data.copy()
@@ -105,52 +107,81 @@ if __name__ == '__main__':
 	#  Gathering data  [/END]] ############
 	#######################################
 
-
 	#######################################
 	#  CONFIG  [BEGIN] ####################
 	#######################################
-	cmap = plt.get_cmap('brg') 
+	cmap = plt.get_cmap('brg')
+	cNorm  = colors.Normalize(vmin=fitness.min(), vmax=fitness.max())
+	scalar_map = cmx.ScalarMappable(norm=cNorm, cmap=cmap)
 
+	figure = plt.figure()
 	#GRID
 	ax00 = plt.subplot2grid((6,2), (0,0), rowspan=5)	#SAMMONS2D
 	ax10 = plt.subplot2grid((6,2), (5, 0))				#SAMMONSERROR
 	ax01 = plt.subplot2grid((6,2), (0,1), rowspan=3)	#PARALEL
 	ax11 = plt.subplot2grid((6,2), (3,1), rowspan=3)	#BEST
 
-
 	##PLOTING OBJECTS
+	paralelCoordPlot = ParalelCoordPlot(s_dataND, ax01, s_norm_data, s_fitness, scalar_map)
+
 	sammonErrorPlot = SammonErrorPlot(sammon_error,ax10)
-	sammon2DPlot = Sammon2DPlot(s_data2D, ax00, s_fitness, s_norm_fitness, cmap)
-	bestFitnessPlot = BestFitnessPlot(fitness, ax11)
+	sammon2DPlot = Sammon2DPlot(s_data2D, ax00, s_fitness, s_norm_fitness, cmap, paralelCoordPlot)
+
+	bestFitnessPlot = BestFitnessPlot(fitness, ax11)	
 
 	##animate
-	frame = 0	
+	frame = 0
 
 	def update_all_plots(frame):
+
+		#update all
 		sammonErrorPlot.update(frame)
 		sammon2DPlot.update(frame)
 		bestFitnessPlot.update(frame)
-		ax11.figure.canvas.draw()
+		paralelCoordPlot.update(frame)
+
+		#update figure canvas
+		figure.canvas.draw()
 
 	def update(event):
 		global frame
 
 		if event.key == 'left':
+
 			if frame > 0:
 				frame -=1
 				update_all_plots(frame)
+				
+				
+				
 			else:
 				print('Left limit')
 		elif event.key == 'right':
-			if frame < E:
-				frame +=1
+			
+			if frame < E:		
+				frame += 1
 				update_all_plots(frame)
 			else:
 				print('Right limit')
 
+	def highlight(event):
+		print('highlight')
+
+		print("fitness",fitness[frame][event.ind])
+
+		#Parallel Coord
+		if event.mouseevent.inaxes is ax01:
+			paralelCoordPlot.highlight(frame, event.ind)
+			figure.canvas.draw()
+		elif event.mouseevent.inaxes is ax00:
+			sammon2DPlot.highlight(frame, event.ind)
+			figure.canvas.draw()
+
+
 	plt.tight_layout()
-	ax11.figure.subplots_adjust(left=setup.LEFT, right=setup.RIGHT, top=setup.TOP, bottom=setup.BOTTOM, wspace=setup.WSPACE, hspace=setup.HSPACE)
+	ax11.figure.subplots_adjust(left=config.LEFT, right=config.RIGHT, top=config.TOP, bottom=config.BOTTOM, wspace=config.WSPACE, hspace=config.HSPACE)
 	ax11.figure.canvas.mpl_connect('key_press_event',update)
+	ax11.figure.canvas.mpl_connect('pick_event',highlight)
 
 	plt.show()
 

@@ -16,7 +16,8 @@ HSPACE = 1.
 
 #Line Width
 LW_THIN = 0.3
-LW_MEDIUM = 1
+LW_MEDIUM = 0.5
+LW_NORMAL = 1
 LW_TICK = 2
 
 
