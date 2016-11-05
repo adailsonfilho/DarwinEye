@@ -1,4 +1,4 @@
-from plots import PlotBase, SammonErrorPlot, BestFitnessPlot, Sammon2DPlot, ParalelCoordPlot
+import plots
 import config
 
 import time
@@ -122,26 +122,30 @@ if __name__ == '__main__':
 	ax11 = plt.subplot2grid((6,2), (3,1), rowspan=3)	#BEST
 
 	##PLOTING OBJECTS
-	paralelCoordPlot = ParalelCoordPlot(s_dataND, ax01, s_norm_data, s_fitness, scalar_map)
+	paralelCoordPlot = plots.ParalelCoordPlot(s_dataND, ax01, s_norm_data, s_fitness, scalar_map)
+	sammonErrorPlot = plots.SammonErrorPlot(sammon_error,ax10)
+	sammon2DPlot = plots.Sammon2DPlot(s_data2D, ax00, s_fitness, s_norm_fitness, cmap, paralelCoordPlot)
+	bestFitnessPlot = plots.BestFitnessPlot(fitness, ax11)
 
-	sammonErrorPlot = SammonErrorPlot(sammon_error,ax10)
-	sammon2DPlot = Sammon2DPlot(s_data2D, ax00, s_fitness, s_norm_fitness, cmap, paralelCoordPlot)
-
-	bestFitnessPlot = BestFitnessPlot(fitness, ax11)	
+	all_plots = plots.PlotComposite(figure)
+	all_plots.add(paralelCoordPlot)
+	all_plots.add(sammonErrorPlot)
+	all_plots.add(sammon2DPlot)
+	all_plots.add(bestFitnessPlot)
 
 	##animate
 	frame = 0
 
-	def update_all_plots(frame):
+	# def update_all_plots(frame):
 
-		#update all
-		sammonErrorPlot.update(frame)
-		sammon2DPlot.update(frame)
-		bestFitnessPlot.update(frame)
-		paralelCoordPlot.update(frame)
+	# 	#update all
+	# 	sammonErrorPlot.update(frame)
+	# 	sammon2DPlot.update(frame)
+	# 	bestFitnessPlot.update(frame)
+	# 	paralelCoordPlot.update(frame)
 
-		#update figure canvas
-		figure.canvas.draw()
+	# 	#update figure canvas
+	# 	figure.canvas.draw()
 
 	def update(event):
 		global frame
@@ -150,17 +154,15 @@ if __name__ == '__main__':
 
 			if frame > 0:
 				frame -=1
-				update_all_plots(frame)
-				
-				
-				
+				all_plots.update(frame)
 			else:
 				print('Left limit')
+
 		elif event.key == 'right':
 			
 			if frame < E:		
 				frame += 1
-				update_all_plots(frame)
+				all_plots.update(frame)
 			else:
 				print('Right limit')
 

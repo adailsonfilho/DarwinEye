@@ -20,6 +20,23 @@ class PlotBase(object):
 	def _update(self,frame):
 		raise("'_update' method was not implemented")
 
+class PlotComposite(PlotBase):
+
+	def __init__(self, figure):
+		super(PlotComposite, self).__init__(None, None)
+		self.plots = []
+		self.figure = figure
+
+	def add(self, plot):
+		self.plots.append(plot)
+
+	def remove(self, plot):
+		self.plots.remove(plot)
+
+	def update(self, frame):
+		for plot in self.plots:
+			plot.update(frame)
+		self.figure.canvas.draw()
 	
 class SammonErrorPlot(PlotBase):
 
