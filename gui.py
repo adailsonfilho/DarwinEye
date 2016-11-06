@@ -30,6 +30,8 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 from swarma.utils import evolutiveReader,normalizeEvolutiveData
 from swarma.iterativesammon import iterativesammon
 
+import ipdb
+
 class App(tk.Tk):
 
 	def __init__(self, *args, **kwargs):
@@ -104,7 +106,7 @@ class App(tk.Tk):
 		paralelCoordPlot = plots.ParalelCoordPlot(self.s_dataND, self.ax01, self.s_norm_data, self.s_fitness, scalar_map)
 		sammonErrorPlot = plots.SammonErrorPlot(self.sammon_error,self.ax10)
 		sammon2DPlot = plots.Sammon2DPlot(self.s_data2D, self.ax00, self.s_fitness, self.s_norm_fitness, cmap, paralelCoordPlot)
-		bestFitnessPlot = plots.BestFitnessPlot(self.s_fitness, self.ax11)
+		bestFitnessPlot = plots.BestFitnessPlot(self.s_fitness, self.ax11 ,self.objective)
 
 		self.all_plots = plots.PlotComposite(self.figure)
 		self.all_plots.add(paralelCoordPlot)
@@ -218,7 +220,9 @@ class App(tk.Tk):
 		### Data Handling ###
 		#####################
 
-		dataND, fitness = evolutiveReader(filename)
+		dataND, fitness, header= evolutiveReader(filename, withheader=True)
+
+		self.objective = header['objective']
 
 		#get size info
 		E, I, D = dataND.shape
@@ -235,7 +239,13 @@ class App(tk.Tk):
 		self.maxFrame = E
 		self.maxFrameVar.set(str(E))
 		#SORTING indexes
-		foi = fitness.argsort()
+
+		if self.objective == 'maximize':
+			foi = fitness.argsort()
+		elif self.objective == 'minimize':
+			foi = fitness.argsort()[::-1]
+		else:
+			raise('Invalid argument for objective:')
 
 		#SORTING IN_PRACTICE
 		self.s_dataND = dataND.copy()
