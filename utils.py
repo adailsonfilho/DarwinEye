@@ -102,7 +102,7 @@ def deaplog2numpy(log):
 
 	return np.array(data), np.array(fitness)
 
-def savelog(data, fitness, header, path, fileprefix)
+def savelog(data, fitness, header, path, fileprefix):
 
 	#generete a timestap string
 	timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S").replace(' ','-').replace(':','')
