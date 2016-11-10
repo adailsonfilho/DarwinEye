@@ -14,6 +14,7 @@ from tkinter import ttk
 ###########################
 import plots
 import config
+import progressbar
 
 ############################
 ### IMPORT -> Matplotlib ###
@@ -29,8 +30,6 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 ########################
 from swarma.utils import evolutiveReader,normalizeEvolutiveData
 from swarma.iterativesammon import iterativesammon
-
-import ipdb
 
 class App(tk.Tk):
 
@@ -59,6 +58,7 @@ class App(tk.Tk):
 		self.currentFrameVar = tk.StringVar()
 		self.maxFrameVar = tk.StringVar()
 		self.showLabelVar = tk.IntVar()
+		self.progressvar = tk.StringVar()
 
 		self.toolbar_config = [
 			{'text': 'Framelapse:', 'command': None, 'builder':ttk.Label},
@@ -72,7 +72,9 @@ class App(tk.Tk):
 			{'text':'Pause', 'command':'PAUSE', 'builder':ttk.Button},
 			{'text':'Stop', 'command':'STOP', 'builder':ttk.Button},
 			{'text':'⭠', 'command':'PREV', 'builder':ttk.Button},
-			{'text':'⭢', 'command':'NEXT', 'builder':ttk.Button}
+			{'text':'⭢', 'command':'NEXT', 'builder':ttk.Button},
+			{'text': self.progressvar, 'command': None, 'builder':ttk.Label},
+			{'text':None, 'command': None, 'builder': ttk.Progressbar}
 		]
 
 		self.t=0
@@ -161,6 +163,10 @@ class App(tk.Tk):
 			elif item_config['builder'] == ttk.Checkbutton:
 				checkbutton_id = ttk.Checkbutton(self.top, variable=item_config['variable'], text=item_config['text'])
 				checkbutton_id.grid(row=0, column=i)
+			elif item_config['builder'] == ttk.Progressbar:
+				self.progress = ttk.Progressbar(self.top, orient="horizontal",length=0, mode="determinate")
+				self.progress.grid(row=0, column=i)
+
 
 	def buildcolormapping(self, fitness):
 
@@ -227,13 +233,28 @@ class App(tk.Tk):
 		#get size info
 		E, I, D = dataND.shape
 
-		#normilize data
-		norm_data, norm_fitness =  normalizeEvolutiveData(dataND, fitness,verbose=True)
+		with progressbar.Process(progressbar=self.progress, length=200, start=0, end=E, label='Normalizing Data:', stringvar=self.progressvar):
 
-		#N-D to 2-D
-		# data2D, sammon_error = sammon(self.dataND)
-		framelapse = int(self.framelapseVar.get())
-		[data2D, self.sammon_error] = iterativesammon(norm_data, framelapse=framelapse)
+			def progbar_norm_update(epoch):
+				print('PROG',epoch)
+				self.progress["value"] = epoch
+				self.update()
+
+			#normilize data
+			norm_data, norm_fitness =  normalizeEvolutiveData(dataND, fitness,verbose=True, eachepoch=progbar_norm_update)
+
+
+		with progressbar.Process(progressbar=self.progress, length=200, start=0, end=E, label='Sammons Mapping:', stringvar=self.progressvar):
+
+			def progbar_sammon_update(epoch):
+				print('PROG',epoch)
+				self.progress["value"] = epoch
+				self.update()
+
+			#N-D to 2-D
+			# data2D, sammon_error = sammon(self.dataND)
+			framelapse = int(self.framelapseVar.get())
+			[data2D, self.sammon_error] = iterativesammon(norm_data, framelapse=framelapse,eachepoch=progbar_sammon_update)
 
 
 		self.maxFrame = E

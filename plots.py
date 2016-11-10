@@ -10,6 +10,15 @@ class PlotBase(object):
 		self.data = data
 		self.axis = axis
 
+		try:
+			self.E = data.shape[0]
+			self.I = data.shape[1]
+			self.D = data.shape[2]
+		except Exception as e:
+			pass
+		
+		
+
 	def build(self):
 		raise("'build' method was not implemented")
 
@@ -45,7 +54,7 @@ class SammonErrorPlot(PlotBase):
 		self.axis.set_title("Sammon's Mapping Error", fontsize=config.NORMAL)
 		self.axis.set_ylabel('Error', fontsize=config.SMALL)
 		self.axis.set_xlabel('Epoch', fontsize=config.SMALL)
-		self.axis.fill_between(range(self.data.shape[0]), self.data,edgecolor=config.RED, facecolor=config.RED)
+		self.axis.fill_between(range(self.E), self.data,edgecolor=config.RED, facecolor=config.RED)
 		self.axis.plot(self.data, c=config.RED_DARK)
 
 		#plot vertical line ate real epoch
@@ -53,14 +62,20 @@ class SammonErrorPlot(PlotBase):
 
 class BestFitnessPlot(PlotBase):
 
-	def __init__(self, data, axis):
+	def __init__(self, data, axis, objective):
 		super(BestFitnessPlot, self).__init__(data,axis)
-		self.best_fitness_acc = np.array([self.data[:(i+1)].max() for i,fit_epoch in enumerate(self.data)])
-		self.best_fitness = np.array([fit_epoch[:(i+1)].max() for i,fit_epoch in enumerate(self.data)])
-		self.avg_fitness = np.array([np.mean(fit_epoch) for fit_epoch in self.data])
+		 
+		if objective == 'maximize':
+			self.best_fitness_acc = np.array([self.data[:(i+1)].max() for i,fit_epoch in enumerate(self.data)])
+			self.best_fitness = np.array([fit_epoch[:(i+1)].max() for i,fit_epoch in enumerate(self.data)])
+			self.avg_fitness = np.array([np.mean(fit_epoch) for fit_epoch in self.data])
+		else:
+			self.best_fitness_acc = np.array([self.data[:(i+1)].min() for i,fit_epoch in enumerate(self.data)])
+			self.best_fitness = np.array([fit_epoch[:(i+1)].min() for i,fit_epoch in enumerate(self.data)])
+			self.avg_fitness = np.array([np.mean(fit_epoch) for fit_epoch in self.data])
 
 		self.xmin = 0
-		self.xmax = data.shape[0]-1
+		self.xmax = self.E-1
 
 		xoffset = (self.xmax-self.xmin)*(config.PAD/2)
 
@@ -108,20 +123,33 @@ class Sammon2DPlot(PlotBase):
 		self.cmap = cmap
 		self.cbar = None
 		self.paralel = paralel
+		self.highlight_inds = np.zeros(self.I)!=0
 
 	def _update(self, frame):
 
 		if self.cbar is not None:
 			self.cbar.remove()
 
+		self.edgecolor = np.array(['#888888' for i in range(self.I)])
+		self.lw = np.zeros(self.I)
+		for i, hl in enumerate(self.highlight_inds):
+
+			if hl:
+				self.edgecolor[i] = '#000000'
+				self.lw[i] = 2 
+
 		self.axis.set_title("Sammon's Mapping", fontsize=config.NORMAL)
-		sc = self.axis.scatter(self.data[frame][:,0],self.data[frame][:,1], c=self.fitness[frame],s=((self.norm_fitness[frame]*50)+10), edgecolor='#888888', alpha=0.75, cmap = self.cmap, vmin=self.fitness.min(), vmax=self.fitness.max(), picker=1.5)
+		sc = self.axis.scatter(self.data[frame][:,0],self.data[frame][:,1], c=self.fitness[frame],s=((self.norm_fitness[frame]*50)+10), edgecolor=self.edgecolor, lw=self.lw, alpha=0.75, cmap = self.cmap, vmin=self.fitness.min(), vmax=self.fitness.max(), picker=1.5)
 		self.cbar = plt.colorbar(sc, ax=self.axis)
 
 	def highlight(self, frame, ind):
-		self.highlight_ind = ind
+
+		for _ind in ind:
+			self.highlight_inds[ind] = not self.highlight_inds[ind]
+			self.paralel.highlight(_ind)
+
 		self.update(frame)
-		self.paralel.highlight(frame,ind)
+		self.paralel.update(frame)
 
 class ParalelCoordPlot(PlotBase):
 
@@ -130,7 +158,8 @@ class ParalelCoordPlot(PlotBase):
 		self.norm_data = norm_data
 		self.fitness = fitness
 		self.scalar_map = scalar_map
-		self.highlight_ind = None
+		self.highlight_inds = np.zeros((self.E,self.I))!=0
+		self.labels = np.array([[[{} for d in range(self.D)] for i in range(self.I)] for e in range(self.E)], dtype=dict)
 
 	def _update(self,frame):
 		self.axis.set_title("Paralel Coordinates", fontsize=config.NORMAL)
@@ -140,17 +169,20 @@ class ParalelCoordPlot(PlotBase):
 		for i, individual in enumerate(self.norm_data[frame]):
 			colorVal = self.scalar_map.to_rgba(self.fitness[frame][i])
 
-			alpha = 1
-			lw = config.LW_NORMAL
+			alpha = 0.5
+			lw = config.LW_MEDIUM
 
-			if self.highlight_ind is not None and i != self.highlight_ind:
-				alpha = 0.5
-				lw = config.LW_MEDIUM
+			if self.highlight_inds[frame][i]:
+				alpha = 1.0
+				lw = config.LW_NORMAL
+				for d in range(self.D):
+					self.axis.scatter(self.labels[frame][i][d]['scatter_x'], self.labels[frame][i][d]['y'], s=30, c='#2222DD')
+					self.axis.text(self.labels[frame][i][d]['x'],self.labels[frame][i][d]['y'],self.labels[frame][i][d]['text'])
 
 			self.axis.plot(individual, lw=lw, color=colorVal, alpha = alpha, picker=1)
 
 		self.xmin = 0
-		self.xmax = self.data.shape[2]-1
+		self.xmax = self.D-1
 
 		xoffset = (self.xmax-self.xmin)*(config.PAD/2)
 
@@ -167,21 +199,24 @@ class ParalelCoordPlot(PlotBase):
 		self.axis.set_xlim(self.xmin, self.xmax)
 		self.axis.set_ylim(self.ymin, self.ymax)		
 
-	def highlight(self,frame,ind):
-		self.highlight_ind = ind
-		self.update(frame)
+	def highlight(self,ind):
 
-		print('Ind:',ind)
+		for e in range(self.E):
 
-		norm_individual = (self.norm_data[frame][ind])[0]
-		individual = (self.data[frame][ind])[0]
+			self.highlight_inds[e][ind] = not self.highlight_inds[e][ind]
 
-		for d in range(self.data.shape[2]):
-			self.axis.scatter(d, norm_individual[d], s=30, c='#2222DD')
-			offset = 0
-			if(d == self.data.shape[2]-1):
-				offset = -0.35
-			self.axis.text(d+offset, norm_individual[d], str(individual[d]))
+			if self.highlight_inds[e][ind] and self.labels[e][ind][0] == {}:
+				norm_individual = self.norm_data[e][ind]
+				individual = self.data[e][ind]
 
-		
+				for d in range(self.D):
+
+					offset = 0
+					if(d == self.D-1):
+						offset = -0.35
+
+					self.labels[e][ind][d]['x'] = d+offset
+					self.labels[e][ind][d]['y'] = norm_individual[d]
+					self.labels[e][ind][d]['text'] = str(individual[d])
+					self.labels[e][ind][d]['scatter_x'] = d
 
