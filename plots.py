@@ -17,7 +17,6 @@ class PlotBase(object):
 		except Exception as e:
 			pass
 		
-		
 
 	def build(self):
 		raise("'build' method was not implemented")
@@ -129,6 +128,9 @@ class Sammon2DPlot(PlotBase):
 
 		if self.cbar is not None:
 			self.cbar.remove()
+
+		self.axis.set_xlim(self.data[:,0].min(), self.data[:,0].max())
+		self.axis.set_ylim(self.data[:,1].min(), self.data[:,1].max())
 
 		self.edgecolor = np.array(['#888888' for i in range(self.I)])
 		self.lw = np.zeros(self.I)

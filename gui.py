@@ -28,8 +28,10 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 ########################
 ### IMPORT -> SWARMA ###
 ########################
-from swarma.utils import evolutiveReader,normalizeEvolutiveData
+# from swarma.utils import evolutiveReader,normalizeEvolutiveData
 from swarma.iterativesammon import iterativesammon
+
+from DarwinEye import utils
 
 class App(tk.Tk):
 
@@ -47,9 +49,9 @@ class App(tk.Tk):
 
 		self.stop = True
 
-		self.config_toolbar()		
-		self.config_graphs()   
+		self.config_toolbar()
 		self.build_toolbar()
+		self.config_graphs()
 
 	def config_toolbar(self):
 		self.framelapseVar = tk.StringVar()
@@ -91,7 +93,9 @@ class App(tk.Tk):
 		toolbar = NavigationToolbar2TkAgg(self.canvas, self)
 		toolbar.update()
 		self.canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+		self.build_axes()
 
+	def build_axes(self):
 		self.ax00 = plt.subplot2grid((6,2), (0,0), rowspan=5)	#SAMMONS2D
 		self.ax10 = plt.subplot2grid((6,2), (5, 0))				#SAMMONSERROR
 		self.ax01 = plt.subplot2grid((6,2), (0,1), rowspan=3)	#PARALEL
@@ -99,6 +103,8 @@ class App(tk.Tk):
 
 		plt.tight_layout()
 		self.figure.subplots_adjust(left=config.LEFT, right=config.RIGHT, top=config.TOP, bottom=config.BOTTOM, wspace=config.WSPACE, hspace=config.HSPACE)
+
+	
 
 	def buildplothandlers(self):
 
@@ -220,13 +226,15 @@ class App(tk.Tk):
 	# 	label_var.set(value)
 
 	def loaddata(self, filename, callback):
+
+		self.build_axes()
 		self.filename = filename
 
 		#####################
 		### Data Handling ###
 		#####################
 
-		dataND, fitness, header= evolutiveReader(filename, withheader=True)
+		dataND, fitness, header= utils.readlog(filename)
 
 		self.objective = header['objective']
 
@@ -240,8 +248,13 @@ class App(tk.Tk):
 				self.progress["value"] = epoch
 				self.update()
 
+			try:
+				bounds = header['bounds']
+			except e:
+				bounds = None
+
 			#normilize data
-			norm_data, norm_fitness =  normalizeEvolutiveData(dataND, fitness,verbose=True, eachepoch=progbar_norm_update)
+			norm_data, norm_fitness =  utils.normalizeEvolutiveData(dataND, fitness,dimensions_boundaries=bounds, verbose=True, eachepoch=progbar_norm_update)
 
 
 		with progressbar.Process(progressbar=self.progress, length=200, start=0, end=E, label='Sammons Mapping:', stringvar=self.progressvar):

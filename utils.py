@@ -18,7 +18,7 @@ def normalizeEvolutiveData(data, fitness,dimensions_boundaries=None, fitness_bou
 
 	- dimensions_boundaries:
 
-	Default is none, so the values considered as min and max for each dimension are the values in data and fitness, if is given, should have the following format: [{'min': <VALUE>, 'max': <VALUE>}, ...], one dict like these for each dimension
+	Default is none, so the values considered as min and max for each dimension are the values in data and fitness, if is given, should have the following format: {'low'[<VALUE>, ...], 'high':[<VALUE>,...]}
 
 	- fitness_boundaries:
 
@@ -37,8 +37,8 @@ def normalizeEvolutiveData(data, fitness,dimensions_boundaries=None, fitness_bou
 		minFitness = fitness.min()
 		maxFitness = fitness.max()
 	else:
-		minFitness = fitness_boundaries['min']
-		maxFitness = fitness_boundaries['max']
+		minFitness = fitness_boundaries['low']
+		maxFitness = fitness_boundaries['high']
 
 	fitness_norm = (fitness- minFitness)/(maxFitness-minFitness)
 
@@ -57,14 +57,14 @@ def normalizeEvolutiveData(data, fitness,dimensions_boundaries=None, fitness_bou
 				minInD = data[:,:,d].min()
 				maxInD = data[:,:,d].max()
 			else:
-				minInD = dimensions_boundaries[d]['min']
-				maxInD = dimensions_boundaries[d]['max']
+				minInD = dimensions_boundaries['low'][d]
+				maxInD = dimensions_boundaries['high'][d]
 
 			data_norm[:,:,d] = (data[:,:,d]-minInD)/(maxInD-minInD)
 
 	return data_norm, fitness_norm
 
-def readlog(filename, withheader=False):
+def readlog(filename):
 
 	with open(filename,'r', encoding='utf-8') as dotswarm:
 		json_str = dotswarm.read()
@@ -78,7 +78,6 @@ def readlog(filename, withheader=False):
 		header = None
 
 	return data,fitness, header
- 
 
 def deaplog2numpy(log):
 	data = []
