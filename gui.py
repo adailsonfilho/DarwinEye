@@ -7,6 +7,7 @@ import numpy as np
 ### IMPORT -> TKINTER ###
 #########################
 import tkinter as tk
+from tkinter import messagebox
 from tkinter import ttk
 
 ###########################
@@ -104,7 +105,8 @@ class App(tk.Tk):
 		plt.tight_layout()
 		self.figure.subplots_adjust(left=config.LEFT, right=config.RIGHT, top=config.TOP, bottom=config.BOTTOM, wspace=config.WSPACE, hspace=config.HSPACE)
 
-	
+	def showwarning(self, title, message):
+		messagebox.showwarning(title, message)
 
 	def buildplothandlers(self):
 
@@ -133,6 +135,7 @@ class App(tk.Tk):
 
 		# self.figure.canvas.mpl_connect('key_press_event',update)
 		self.figure.canvas.mpl_connect('pick_event',highlight)
+		# self.figure.canvas.mpl_connect('motion_notify_event',highlight)
 
 	def build_toolbar(self):
 		self.toolbar_length = len(self.toolbar_config)
@@ -189,10 +192,11 @@ class App(tk.Tk):
 
 		print('service called', command)
 		if command == 'PLAY':
-			self.all_plots.update(self.t)
+			self.stop = False
+			self.blink()
 
 		elif command == 'PAUSE':
-			print('PAUSE')
+			self.stop = True
 
 		elif command == 'STOP':
 			print('STOP')
@@ -203,6 +207,7 @@ class App(tk.Tk):
 				self.currentFrameVar.set(self.t)
 				self.all_plots.update(self.t)
 			else:
+				self.showwarning('Warning!','Minimum epoch reached')
 				print('WARNING: Minimum epoch reached')
 
 		elif command == 'NEXT':
@@ -212,18 +217,34 @@ class App(tk.Tk):
 				self.currentFrameVar.set(self.t)
 				self.all_plots.update(self.t)
 			else:
+				self.showwarning('Warning!','Maximum epoch reached')
 				print('WARNING: Maximum epoch reached')
 
 		elif command == 'REFRESH':
-			print('REFRASH')
+			frame = int(self.currentFrameVar.get())
+
+			if frame >= 0 and frame < self.maxFrame:
+				self.t = frame
+				self.all_plots.update(self.t)
+			else:
+				self.showwarning('Warning!','Epoch out of range')
 
 		elif command == 'OPEN':
 			# self.Mbox('Loading configuration', [{'var':filename, 'func':func}, {'var':}])
-			self.loaddata(filename = self.askopenfilename(), callback = lambda: self.service_toolbar('PLAY'))
+			self.loaddata(filename = self.askopenfilename(), callback = lambda: self.service_toolbar('REFRESH'))
 
 	# def update_var_label(self, var, label_var, value):
 	# 	var = value
 	# 	label_var.set(value)
+
+	def blink(self):
+
+		if self.t +1 < self.maxFrame and not self.stop:
+			self.t +=1
+			print('Playing:',self.t)
+			self.currentFrameVar.set(self.t)
+			self.all_plots.update(self.t)
+			self.after(600, self.blink())
 
 	def loaddata(self, filename, callback):
 
@@ -271,7 +292,7 @@ class App(tk.Tk):
 
 
 		self.maxFrame = E
-		self.maxFrameVar.set(str(E))
+		self.maxFrameVar.set(str(E-1))
 		#SORTING indexes
 
 		if self.objective == 'maximize':

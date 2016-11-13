@@ -27,3 +27,7 @@ RED_DARK = '#AA2222'
 GREEN = 'green'
 ORANGE = 'orange'
 BLUE = 'blue'
+
+#scatter point
+SMAX = 10
+SMIN = 50
