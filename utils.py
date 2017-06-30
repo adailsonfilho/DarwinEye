@@ -114,3 +114,12 @@ def savelog(data, fitness, header, path, fileprefix):
 
 	with open(path+'/'+filename,'w',encoding='utf-8') as logfile:
 		logfile.write(json_file)
+
+
+def framelapse(maxval, framelapse):
+
+	arange = np.arange(0, maxval,framelapse)
+	if (maxval-1) % framelapse != 0:
+		arange = np.concatenate([arange,[maxval-1]])
+
+	return arange.tolist()
