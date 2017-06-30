@@ -9,4 +9,4 @@ A JSON with the algoritm log must be provided (in a specif format [SOON]), with 
 Dependencies:
 - Matplotlib: =< 1.5.3
 - Numpy: =< 1.11
-- [Swarma](https://github.com/adailsonfilho/swarma)
+- Tkinter
