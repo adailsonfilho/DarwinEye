@@ -10,3 +10,6 @@ Dependencies:
 - Matplotlib: =< 1.5.3
 - Numpy: =< 1.11
 - Tkinter
+
+Applition Screenshot
+![scheenshot](darwineye.png "Screenshot of darwin eye afeter loading some data")
